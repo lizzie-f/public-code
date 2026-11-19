@@ -6,6 +6,11 @@ import pandas as pd
 from nltk.corpus import stopwords
 import numpy as np
 
+try:
+    nltk.data.find("taggers/averaged_perceptron_tagger_eng/")
+except LookupError:
+    nltk.download("averaged_perceptron_tagger_eng")
+
 text = "I enjoy battling my pets in the bd once a day, its a good strategy to earn your nps. you can battle your P2s in the p2 arena but we are waiting for a way to battle p3s!"
 text_2 = "I am enjoying my daily battle with my pet in the battle dome! the battledome is a great approach to earn neopoints. You can also battle pet pets in the p2 arena! you are not able to battle petpetpets yet though, but I am happy to wait"
 
