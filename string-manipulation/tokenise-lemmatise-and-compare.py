@@ -14,6 +14,10 @@ except LookupError:
 text = "I enjoy battling my pets in the bd once a day, its a good strategy to earn your nps. you can battle your P2s in the p2 arena but we are waiting for a way to battle p3s!"
 text_2 = "I am enjoying my daily battle with my pet in the battle dome! the battledome is a great approach to earn neopoints. You can also battle pet pets in the p2 arena! you are not able to battle petpetpets yet though, but I am happy to wait"
 
+# normalise strings by replacing hyphens, en dashes, em dashes and forward slashes with a space
+text = re.sub(r"[-–—/]", " ", text)
+text_2 = re.sub(r"[-–—/]", " ", text_2)
+
 # tokenize and make lowercase
 words = word_tokenize(text.lower())
 words_2 = word_tokenize(text_2.lower())
