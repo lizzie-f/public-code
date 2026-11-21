@@ -1,29 +1,27 @@
 import os 
 import pandas as pd
 
+from utils import (
+    compare_two_columns)
+
 user = os.getlogin()
 
 data = pd.read_excel(f'C:/Users/{user}/Downloads/mock_data_epa.xlsx')
 
-from utils import (
-    compare_two_columns
-)
-
-columns = ['ID', 'URL', 'title', 'description', 'tags', 'second_title', 'second_description', 'second_tags']
-
-# create dictionary of paired columns to compare 
+# create dictionary of paired columns to compare against each other
+# values must contain a single entry or script will fail
 columns_to_compare = {
     'title': 'second_title', 
     'description': 'second_description', 
     'tags': 'second_tags'
-}
+    }
 
-# create dictionaries to enable conversion of acronyms and common synonyms
+# create dictionaries to enable conversion of domain acronyms and synonyms
 acronyms = {
-    'p2': ['pet'], 
-    'p2s': ['pet'],
-    'p3': ['pet'],
-    'p3s': ['pet'],
+    'p2': ['pet pet'], 
+    'p2s': ['pet pets'],
+    'p3': ['pet pet pet'],
+    'p3s': ['pet pet pets'],
     'np': ['neopoint'],
     'nps': ['neopoints'],
     'bd': ['battledome'],
@@ -38,26 +36,16 @@ synonyms = {
     'petpetpet': ['pet', 'pet', 'pet']
     }
 
-data['compare_titles'] = compare_two_columns(
-    df=data, 
-    column_1='title', 
-    column_2='second_title', 
-    acronyms=acronyms, 
-    synonyms=synonyms
-    )
+# iterate over columns_to_compare dict to apply compare_two_columns function
+for key in columns_to_compare:
+    # initialise variables
+    value = columns_to_compare.get(key)
+    column_name = 'compare_' + key
 
-data['compare_descriptions'] = compare_two_columns(
-    df=data, 
-    column_1='description', 
-    column_2='second_description', 
-    acronyms=acronyms, 
-    synonyms=synonyms
-    )
-
-data['compare_tags'] = compare_two_columns(
-    df=data, 
-    column_1='tags', 
-    column_2='second_tags', 
-    acronyms=acronyms, 
-    synonyms=synonyms
-    )
+    data[column_name] = compare_two_columns(
+        df=data, 
+        column_1=key, 
+        column_2=value, 
+        acronyms=acronyms, 
+        synonyms=synonyms
+        )
