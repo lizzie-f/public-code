@@ -1,15 +1,12 @@
-import pandas as pd
 import os 
+import pandas as pd
 
 user = os.getlogin()
 
 data = pd.read_excel(f'C:/Users/{user}/Downloads/mock_data_epa.xlsx')
 
 from utils import (
-    normalise_and_tokenise,
-    replace_acronyms_and_synonyms, 
-    remove_stopwords_keep_alphanumeric_only, 
-    lemmatise_words,
+    compare_two_columns
 )
 
 columns = ['ID', 'URL', 'title', 'description', 'tags', 'second_title', 'second_description', 'second_tags']
@@ -41,50 +38,26 @@ synonyms = {
     'petpetpet': ['pet', 'pet', 'pet']
     }
 
-# set up variables 
-length = len(data)
-column_1 = data['description']
-column_2 = data['second_description']
-lemmatised_match_rate = []
+data['compare_titles'] = compare_two_columns(
+    df=data, 
+    column_1='title', 
+    column_2='second_title', 
+    acronyms=acronyms, 
+    synonyms=synonyms
+    )
 
-# loop through rows
-for i in range(length):
-    text = column_1[i]
-    text_2 = column_2[i]
+data['compare_descriptions'] = compare_two_columns(
+    df=data, 
+    column_1='description', 
+    column_2='second_description', 
+    acronyms=acronyms, 
+    synonyms=synonyms
+    )
 
-    # normalise and tokenise text
-    text = normalise_and_tokenise(text)
-    text_2 = normalise_and_tokenise(text_2)
-
-    # replace acronyms and synonyms
-    text = replace_acronyms_and_synonyms(text, acronyms, synonyms)
-    text_2 = replace_acronyms_and_synonyms(text_2, acronyms, synonyms)
-
-    # remove stopwords and any non-alphanumeric entries
-    text = remove_stopwords_keep_alphanumeric_only(text)
-    text_2 = remove_stopwords_keep_alphanumeric_only(text_2)
-
-    # lemmatise 
-    text = lemmatise_words(text)
-    text_2 = lemmatise_words(text_2)
-
-    # compare lists
-    # turn word list 1 into a temp dataframe for easier comparison with word list 2
-    lemmatised_dataframe = pd.DataFrame(data=text, columns=['words'])
-
-    # compare list 1 against list 2 
-    lemmatised_dataframe['match'] = lemmatised_dataframe.isin(text_2)
-
-    # produce a "match" rate as a percent
-    length = len(lemmatised_dataframe)
-    matches = lemmatised_dataframe['match'].value_counts()
-    match_rate = matches[True]
-    match_rate_as_percent = round((match_rate / length) * 100, 2)
-
-    # convert to float and add result to list
-    lemmatised_match_rate.append(float(match_rate_as_percent))
-
-# convert lemmatised_match_rate to column in 'data' dataframe 
-
-data['compare_descriptions'] = lemmatised_match_rate
-
+data['compare_tags'] = compare_two_columns(
+    df=data, 
+    column_1='tags', 
+    column_2='second_tags', 
+    acronyms=acronyms, 
+    synonyms=synonyms
+    )
