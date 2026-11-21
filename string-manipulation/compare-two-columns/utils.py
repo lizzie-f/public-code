@@ -1,11 +1,11 @@
+import re
+
+import nltk
+from nltk.corpus import stopwords
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-import nltk
 import pandas as pd
-from nltk.corpus import stopwords
-import numpy as np
-import re
 
 try:
     nltk.data.find("taggers/averaged_perceptron_tagger_eng/")
@@ -187,3 +187,92 @@ def lemmatise_words(words):
     ]
 
     return lemmatised_words
+
+def compare_two_columns(df, column_1, column_2, acronyms, synonyms):
+    '''
+    Compare lemmatised tokens between two columns in a DataFrame.
+
+    Assumes ``column_1`` and ``column_2`` exist in ``df`` and share a
+    0-based integer index from ``0`` to ``len(df) - 1``. For each row, the
+    function normalises, tokenises, expands acronyms and synonyms, removes
+    stopwords and non-alphanumeric tokens, and lemmatises both text values.
+    It then calculates the percentage of lemmatised tokens from
+    ``column_1`` present in ``column_2``.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame containing both ``column_1`` and ``column_2``.
+    column_1 : hashable
+        Name of the reference column in ``df``. Match percentages measure
+        how many lemmatised tokens from this column appear in ``column_2``.
+    column_2 : hashable
+        Name of the target column in ``df`` to compare against.
+    acronyms : Any
+        Mapping or lookup structure passed to
+        ``replace_acronyms_and_synonyms`` to expand acronyms.
+    synonyms : Any
+        Mapping or lookup structure passed to
+        ``replace_acronyms_and_synonyms`` to standardise synonyms.
+
+    Returns
+    -------
+    list of float
+        Percentage match rate for each row in ``df``, rounded to 2 decimal
+        places.
+
+    Notes
+    -----
+    * Both columns must be in ``df`` and indexed sequentially from ``0`` to
+      ``len(df) - 1`` because rows are accessed with ``column[i]``.
+    * Each row's match rate is calculated as ``(matches[True] / len(text)) * 100``
+      using the lemmatised tokens from ``column_1``.
+    * The function currently returns a ``list`` rather than attaching the
+      values to a DataFrame column.
+    '''
+    # set up variables 
+    length = len(df)
+    column_1 = df[column_1]
+    column_2 = df[column_2]
+    lemmatised_match_rate = []
+
+    # loop through rows
+    for i in range(length):
+        text = column_1[i]
+        text_2 = column_2[i]
+
+        # normalise and tokenise text
+        text = normalise_and_tokenise(text)
+        text_2 = normalise_and_tokenise(text_2)
+
+        # replace acronyms and synonyms
+        text = replace_acronyms_and_synonyms(text, acronyms, synonyms)
+        text_2 = replace_acronyms_and_synonyms(text_2, acronyms, synonyms)
+
+        # remove stopwords and any non-alphanumeric entries
+        text = remove_stopwords_keep_alphanumeric_only(text)
+        text_2 = remove_stopwords_keep_alphanumeric_only(text_2)
+
+        # lemmatise 
+        text = lemmatise_words(text)
+        text_2 = lemmatise_words(text_2)
+
+        # compare lists
+        # turn word list 1 into a temp dataframe for easier comparison with word list 2
+        lemmatised_dataframe = pd.DataFrame(data=text, columns=['words'])
+
+        # compare list 1 against list 2 
+        lemmatised_dataframe['match'] = lemmatised_dataframe.isin(text_2)
+
+        # produce a "match" rate as a percent
+        length = len(lemmatised_dataframe)
+        matches = lemmatised_dataframe['match'].value_counts()
+        match_rate = matches[True]
+        match_rate_as_percent = round((match_rate / length) * 100, 2)
+
+        # convert to float and add result to list
+        lemmatised_match_rate.append(float(match_rate_as_percent))
+
+    # convert lemmatised_match_rate to column in 'data' dataframe 
+
+    return lemmatised_match_rate
